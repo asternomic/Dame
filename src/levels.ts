@@ -1,0 +1,114 @@
+export interface PlatformDef {
+  x: number;
+  y: number;
+  /** Width in px; defaults to 200. */
+  w?: number;
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface LevelDef {
+  name: string;
+  platforms: PlatformDef[];
+  coins: Point[];
+  playerStart: Point;
+}
+
+export const PLATFORM_HEIGHT = 24;
+const GROUND_Y = 560;
+
+/** Coin resting on top of a platform at (x, y). */
+const on = (x: number, y: number): Point => ({ x, y: y - PLATFORM_HEIGHT / 2 - 10 });
+const ground = (x: number): Point => ({ x, y: GROUND_Y });
+
+export const LEVELS: LevelDef[] = [
+  {
+    name: 'Warm-up',
+    platforms: [
+      { x: 150, y: 470 },
+      { x: 650, y: 400 },
+      { x: 400, y: 320 },
+      { x: 120, y: 200 },
+    ],
+    coins: [
+      ground(285), ground(510),
+      on(110, 470), on(190, 470),
+      on(610, 400), on(690, 400),
+      on(360, 320), on(440, 320),
+      on(80, 200), on(160, 200),
+    ],
+    playerStart: { x: 400, y: 520 },
+  },
+  {
+    name: 'Staircase',
+    platforms: [
+      { x: 100, y: 500 },
+      { x: 300, y: 420 },
+      { x: 500, y: 340 },
+      { x: 700, y: 260 },
+      { x: 100, y: 150 },
+    ],
+    coins: [
+      ground(200), ground(400), ground(600),
+      on(100, 500), on(300, 420), on(500, 340), on(700, 260),
+      on(100, 150),
+    ],
+    playerStart: { x: 400, y: 520 },
+  },
+  {
+    name: 'Wrap-around',
+    platforms: [
+      { x: 0, y: 450 },
+      { x: 800, y: 450 },
+      { x: 400, y: 400 },
+      { x: 0, y: 300, w: 160 },
+      { x: 800, y: 300, w: 160 },
+      { x: 400, y: 220 },
+    ],
+    coins: [
+      ground(300), ground(500),
+      on(30, 450), on(770, 450),
+      on(400, 400),
+      on(20, 300), on(780, 300),
+      on(400, 220),
+    ],
+    playerStart: { x: 400, y: 520 },
+  },
+  {
+    name: 'Towers',
+    platforms: [
+      { x: 150, y: 440, w: 160 },
+      { x: 150, y: 270, w: 160 },
+      { x: 150, y: 100, w: 160 },
+      { x: 650, y: 440, w: 160 },
+      { x: 650, y: 270, w: 160 },
+      { x: 650, y: 100, w: 160 },
+    ],
+    coins: [
+      ground(300), ground(380), ground(460), ground(540),
+      on(150, 440), on(150, 270), on(150, 100),
+      on(650, 440), on(650, 270), on(650, 100),
+    ],
+    playerStart: { x: 400, y: 520 },
+  },
+  {
+    name: 'Summit',
+    platforms: [
+      { x: 100, y: 480, w: 100 },
+      { x: 300, y: 420, w: 100 },
+      { x: 500, y: 480, w: 100 },
+      { x: 700, y: 400, w: 100 },
+      { x: 400, y: 300, w: 100 },
+      { x: 400, y: 110, w: 120 },
+    ],
+    coins: [
+      ground(200), ground(400), ground(600),
+      on(100, 480), on(300, 420), on(500, 480), on(700, 400), on(400, 300),
+      on(400, 110),
+    ],
+    playerStart: { x: 400, y: 520 },
+  },
+];

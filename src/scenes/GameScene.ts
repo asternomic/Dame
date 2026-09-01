@@ -1,62 +1,81 @@
 import Phaser from 'phaser';
+import { LEVELS, PLATFORM_HEIGHT } from '../levels';
 
 const WIDTH = 800;
 const HEIGHT = 600;
 const BASE_JUMP = 400;
 const JUMP_PER_COIN = 25;
 
+interface SceneData {
+  level?: number;
+}
+
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private coins!: Phaser.Physics.Arcade.Group;
-  private scoreText!: Phaser.GameObjects.Text;
-  private score = 0;
+  private hudText!: Phaser.GameObjects.Text;
+  private levelIndex = 0;
+  private collected = 0;
+  private finished = false;
 
   constructor() {
     super('GameScene');
   }
 
+  init(data: SceneData) {
+    this.levelIndex = Phaser.Math.Clamp(data.level ?? 0, 0, LEVELS.length - 1);
+    this.collected = 0;
+    this.finished = false;
+  }
+
   preload() {
     this.makeTexture('player', 32, 48, 0x4ecca3);
-    this.makeTexture('platform', 200, 24, 0x6c5ce7);
+    this.makeTexture('platform', 200, PLATFORM_HEIGHT, 0x6c5ce7);
     this.makeTexture('coin', 16, 16, 0xffd32a);
   }
 
   create() {
-    this.score = 0;
+    const level = LEVELS[this.levelIndex];
 
     const platforms = this.physics.add.staticGroup();
     platforms.create(WIDTH / 2, HEIGHT - 12, 'platform').setScale(5, 1).refreshBody();
-    platforms.create(150, 470, 'platform');
-    platforms.create(650, 400, 'platform');
-    platforms.create(400, 320, 'platform');
-    platforms.create(120, 200, 'platform');
+    for (const p of level.platforms) {
+      platforms.create(p.x, p.y, 'platform').setScale((p.w ?? 200) / 200, 1).refreshBody();
+    }
 
-    this.player = this.physics.add.sprite(100, HEIGHT - 80, 'player');
+    this.player = this.physics.add.sprite(level.playerStart.x, level.playerStart.y, 'player');
     this.player.setBounce(0.1);
     this.physics.world.setBounds(-this.player.width, 0, WIDTH + this.player.width * 2, HEIGHT);
     this.physics.world.setBoundsCollision(false, false, true, true);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, platforms);
 
-    this.coins = this.physics.add.group();
-    for (let i = 0; i < 10; i++) {
-      const coin = this.coins.create(60 + i * 75, 0, 'coin') as Phaser.Physics.Arcade.Sprite;
-      coin.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    this.coins = this.physics.add.group({ allowGravity: false, immovable: true });
+    for (const c of level.coins) {
+      this.coins.create(c.x, c.y, 'coin');
     }
-    this.physics.add.collider(this.coins, platforms);
     this.physics.add.overlap(this.player, this.coins, (_p, c) => this.collectCoin(c as Phaser.Physics.Arcade.Sprite));
 
-    this.scoreText = this.add.text(16, 16, '', { fontSize: '24px', color: '#ffffff' });
+    this.hudText = this.add.text(16, 16, '', { fontSize: '24px', color: '#ffffff' });
     this.updateHud();
     this.add
-      .text(WIDTH / 2, 48, 'Arrows to move, Up to jump. Coins boost your jump!', { fontSize: '16px', color: '#aaaaaa' })
+      .text(WIDTH / 2, 48, `${level.name} — Arrows to move, Up to jump. Coins boost your jump!`, {
+        fontSize: '16px',
+        color: '#aaaaaa',
+      })
       .setOrigin(0.5, 0);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
+    this.input.keyboard!.on('keydown-R', () => this.scene.restart({ level: this.levelIndex }));
   }
 
   update() {
+    if (this.finished) {
+      this.player.setVelocityX(0);
+      return;
+    }
+
     const speed = 200;
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-speed);
@@ -78,24 +97,39 @@ export class GameScene extends Phaser.Scene {
   }
 
   private jumpVelocity() {
-    return BASE_JUMP + (this.score / 10) * JUMP_PER_COIN;
+    return BASE_JUMP + this.collected * JUMP_PER_COIN;
   }
 
   private updateHud() {
-    this.scoreText.setText(`Score: ${this.score}   Jump: ${this.jumpVelocity()}`);
+    const total = LEVELS[this.levelIndex].coins.length;
+    this.hudText.setText(`Level ${this.levelIndex + 1}/${LEVELS.length}   Coins ${this.collected}/${total}`);
   }
 
   private collectCoin(coin: Phaser.Physics.Arcade.Sprite) {
     coin.disableBody(true, true);
-    this.score += 10;
+    this.collected++;
     this.updateHud();
 
     if (this.coins.countActive(true) === 0) {
-      this.add
-        .text(WIDTH / 2, 250, 'You win! Press R to restart', { fontSize: '32px', color: '#4ecca3' })
-        .setOrigin(0.5);
-      this.input.keyboard!.once('keydown-R', () => this.scene.restart());
+      this.finished = true;
+      const isLast = this.levelIndex === LEVELS.length - 1;
+      this.showBanner(
+        isLast
+          ? `You beat all ${LEVELS.length} levels!\nPress Enter to play again`
+          : `Level ${this.levelIndex + 1} complete!\nPress Enter for the next level`,
+      );
+      this.input.keyboard!.once('keydown-ENTER', () =>
+        this.scene.restart({ level: isLast ? 0 : this.levelIndex + 1 }),
+      );
     }
+  }
+
+  private showBanner(message: string) {
+    this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, 120, 0x000000, 0.7).setDepth(10);
+    this.add
+      .text(WIDTH / 2, HEIGHT / 2, message, { fontSize: '28px', color: '#4ecca3', align: 'center' })
+      .setOrigin(0.5)
+      .setDepth(11);
   }
 
   private makeTexture(key: string, w: number, h: number, color: number) {
