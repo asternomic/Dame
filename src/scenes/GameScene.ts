@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 
 const WIDTH = 800;
 const HEIGHT = 600;
+const BASE_JUMP = 400;
+const JUMP_PER_COIN = 25;
 
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -24,14 +26,16 @@ export class GameScene extends Phaser.Scene {
     this.score = 0;
 
     const platforms = this.physics.add.staticGroup();
-    platforms.create(WIDTH / 2, HEIGHT - 12, 'platform').setScale(4, 1).refreshBody();
+    platforms.create(WIDTH / 2, HEIGHT - 12, 'platform').setScale(5, 1).refreshBody();
     platforms.create(150, 450, 'platform');
     platforms.create(650, 380, 'platform');
     platforms.create(400, 280, 'platform');
     platforms.create(120, 180, 'platform');
 
     this.player = this.physics.add.sprite(100, HEIGHT - 80, 'player');
-    this.player.setBounce(0.1).setCollideWorldBounds(true);
+    this.player.setBounce(0.1);
+    this.physics.world.setBounds(-this.player.width, 0, WIDTH + this.player.width * 2, HEIGHT);
+    this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, platforms);
 
     this.coins = this.physics.add.group();
@@ -42,9 +46,10 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.coins, platforms);
     this.physics.add.overlap(this.player, this.coins, (_p, c) => this.collectCoin(c as Phaser.Physics.Arcade.Sprite));
 
-    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '24px', color: '#ffffff' });
+    this.scoreText = this.add.text(16, 16, '', { fontSize: '24px', color: '#ffffff' });
+    this.updateHud();
     this.add
-      .text(WIDTH / 2, 16, 'Arrows to move, Up to jump', { fontSize: '16px', color: '#aaaaaa' })
+      .text(WIDTH / 2, 16, 'Arrows to move, Up to jump. Coins boost your jump!', { fontSize: '16px', color: '#aaaaaa' })
       .setOrigin(0.5, 0);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -61,14 +66,28 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.cursors.up.isDown && this.player.body!.touching.down) {
-      this.player.setVelocityY(-450);
+      this.player.setVelocityY(-this.jumpVelocity());
     }
+
+    if (this.player.x < -this.player.width / 2) {
+      this.player.x = WIDTH + this.player.width / 2;
+    } else if (this.player.x > WIDTH + this.player.width / 2) {
+      this.player.x = -this.player.width / 2;
+    }
+  }
+
+  private jumpVelocity() {
+    return BASE_JUMP + (this.score / 10) * JUMP_PER_COIN;
+  }
+
+  private updateHud() {
+    this.scoreText.setText(`Score: ${this.score}   Jump: ${this.jumpVelocity()}`);
   }
 
   private collectCoin(coin: Phaser.Physics.Arcade.Sprite) {
     coin.disableBody(true, true);
     this.score += 10;
-    this.scoreText.setText(`Score: ${this.score}`);
+    this.updateHud();
 
     if (this.coins.countActive(true) === 0) {
       this.add
