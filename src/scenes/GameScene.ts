@@ -92,7 +92,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.coins.countActive(true) === 0) {
       this.add
-        .text(WIDTH / 2, HEIGHT / 2, 'You win! Press R to restart', { fontSize: '32px', color: '#4ecca3' })
+        .text(WIDTH / 2, 250, 'You win! Press R to restart', { fontSize: '32px', color: '#4ecca3' })
         .setOrigin(0.5);
       this.input.keyboard!.once('keydown-R', () => this.scene.restart());
     }
