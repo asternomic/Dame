@@ -27,14 +27,15 @@ export class GameScene extends Phaser.Scene {
 
     const platforms = this.physics.add.staticGroup();
     platforms.create(WIDTH / 2, HEIGHT - 12, 'platform').setScale(5, 1).refreshBody();
-    platforms.create(150, 450, 'platform');
-    platforms.create(650, 380, 'platform');
-    platforms.create(400, 280, 'platform');
-    platforms.create(120, 180, 'platform');
+    platforms.create(150, 470, 'platform');
+    platforms.create(650, 400, 'platform');
+    platforms.create(400, 320, 'platform');
+    platforms.create(120, 200, 'platform');
 
     this.player = this.physics.add.sprite(100, HEIGHT - 80, 'player');
     this.player.setBounce(0.1);
     this.physics.world.setBounds(-this.player.width, 0, WIDTH + this.player.width * 2, HEIGHT);
+    this.physics.world.setBoundsCollision(false, false, true, true);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, platforms);
 
@@ -49,7 +50,7 @@ export class GameScene extends Phaser.Scene {
     this.scoreText = this.add.text(16, 16, '', { fontSize: '24px', color: '#ffffff' });
     this.updateHud();
     this.add
-      .text(WIDTH / 2, 16, 'Arrows to move, Up to jump. Coins boost your jump!', { fontSize: '16px', color: '#aaaaaa' })
+      .text(WIDTH / 2, 48, 'Arrows to move, Up to jump. Coins boost your jump!', { fontSize: '16px', color: '#aaaaaa' })
       .setOrigin(0.5, 0);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -69,9 +70,9 @@ export class GameScene extends Phaser.Scene {
       this.player.setVelocityY(-this.jumpVelocity());
     }
 
-    if (this.player.x < -this.player.width / 2) {
+    if (this.player.x <= -this.player.width / 2) {
       this.player.x = WIDTH + this.player.width / 2;
-    } else if (this.player.x > WIDTH + this.player.width / 2) {
+    } else if (this.player.x >= WIDTH + this.player.width / 2) {
       this.player.x = -this.player.width / 2;
     }
   }
