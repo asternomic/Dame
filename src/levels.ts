@@ -10,19 +10,41 @@ export interface Point {
   y: number;
 }
 
+export interface EnemyDef extends Point {
+  /** Patrol distance either side of x. */
+  range: number;
+  hp?: number;
+}
+
 export interface LevelDef {
   name: string;
   platforms: PlatformDef[];
   coins: Point[];
+  enemies?: EnemyDef[];
   playerStart: Point;
 }
 
 export const PLATFORM_HEIGHT = 24;
+export const ENEMY_SIZE = 28;
+const GROUND_TOP = 576;
 const GROUND_Y = 560;
 
 /** Coin resting on top of a platform at (x, y). */
 const on = (x: number, y: number): Point => ({ x, y: y - PLATFORM_HEIGHT / 2 - 10 });
 const ground = (x: number): Point => ({ x, y: GROUND_Y });
+/** Enemy patrolling on top of a platform at (x, y). */
+const enemyOn = (x: number, y: number, range: number, hp = 1): EnemyDef => ({
+  x,
+  y: y - PLATFORM_HEIGHT / 2 - ENEMY_SIZE / 2,
+  range,
+  hp,
+});
+const groundEnemy = (x: number, range: number, hp = 1): EnemyDef => ({
+  x,
+  y: GROUND_TOP - ENEMY_SIZE / 2,
+  range,
+  hp,
+});
 
 export const LEVELS: LevelDef[] = [
   {
@@ -110,5 +132,92 @@ export const LEVELS: LevelDef[] = [
       on(250, 130),
     ],
     playerStart: { x: 50, y: 520 },
+  },
+  {
+    name: 'First contact',
+    platforms: [
+      { x: 200, y: 450 },
+      { x: 600, y: 350 },
+    ],
+    coins: [
+      ground(100), ground(700),
+      on(160, 450), on(240, 450),
+      on(560, 350), on(640, 350),
+    ],
+    enemies: [groundEnemy(400, 150)],
+    playerStart: { x: 40, y: 520 },
+  },
+  {
+    name: 'Patrol',
+    platforms: [
+      { x: 150, y: 470 },
+      { x: 650, y: 470 },
+      { x: 400, y: 330 },
+      { x: 150, y: 180, w: 160 },
+    ],
+    coins: [
+      ground(300), ground(500),
+      on(90, 470), on(210, 470),
+      on(590, 470), on(710, 470),
+      on(340, 330), on(460, 330),
+      on(150, 180),
+    ],
+    enemies: [enemyOn(150, 470, 60), enemyOn(650, 470, 60), enemyOn(400, 330, 60)],
+    playerStart: { x: 400, y: 520 },
+  },
+  {
+    name: 'Gauntlet',
+    platforms: [
+      { x: 0, y: 420 },
+      { x: 800, y: 420 },
+      { x: 400, y: 420 },
+      { x: 200, y: 260 },
+    ],
+    coins: [
+      ground(100), ground(700),
+      on(40, 420), on(760, 420), on(400, 420),
+      on(160, 260), on(240, 260),
+    ],
+    enemies: [groundEnemy(250, 100), groundEnemy(550, 100), enemyOn(400, 420, 60)],
+    playerStart: { x: 400, y: 520 },
+  },
+  {
+    name: 'Swarm',
+    platforms: [
+      { x: 150, y: 470 },
+      { x: 400, y: 380 },
+      { x: 650, y: 470 },
+      { x: 650, y: 250 },
+    ],
+    coins: [
+      ground(100), ground(250), ground(550), ground(700),
+      on(150, 470), on(400, 380), on(650, 470), on(650, 250),
+    ],
+    enemies: [
+      groundEnemy(175, 50),
+      groundEnemy(400, 60),
+      groundEnemy(625, 50),
+      enemyOn(150, 470, 50),
+      enemyOn(650, 470, 50),
+      enemyOn(400, 380, 70),
+    ],
+    playerStart: { x: 40, y: 520 },
+  },
+  {
+    name: 'Boss ledge',
+    platforms: [
+      { x: 150, y: 470 },
+      { x: 650, y: 470 },
+      { x: 400, y: 360 },
+      { x: 150, y: 180, w: 240 },
+    ],
+    coins: [
+      ground(250), ground(550),
+      on(150, 470), on(650, 470),
+      on(340, 360), on(460, 360),
+      on(150, 180),
+    ],
+    enemies: [groundEnemy(400, 100), enemyOn(400, 360, 60), enemyOn(150, 180, 90, 5)],
+    playerStart: { x: 60, y: 520 },
   },
 ];
